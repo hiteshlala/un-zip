@@ -1,0 +1,11 @@
+{
+  "name": "unzippy",
+  "version": "0.0.1",
+  "description": "Simple pure Node.js unzip library",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Hitesh Lala <hiteshlala@gmail.com>",
+  "license": "ISC"
+}
