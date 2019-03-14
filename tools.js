@@ -20,7 +20,7 @@ function mkdir( p ) {
     }
     else {
       console.log( p, e.code );
-      console.log( e );
+      throw e;
     }
   }
 }

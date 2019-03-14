@@ -100,6 +100,21 @@ function readCDHeaderSignature( fd, data, i ) {
   return { found: false };
 }
 
+function unzip( fd, info ) {
+  const out = path.resolve( output, info.fName );
+  if ( tools.isdir( out ) ) return;
+
+  const dir = path.dirname( out );
+  tools.mkdir( dir );
+
+  const outfile = fs.createWriteStream( out );
+
+  
+
+
+
+}
+
 const fd = fs.openSync( source, 'r' );
 const stat = fs.statSync( source );
 console.log( stat );
@@ -113,9 +128,11 @@ console.log( '\nEnd Of Central Directory:\n', result, '\n' );
 if ( result.found ) {
   let CDHeader = readCDHeaderSignature( fd,  result );
   console.log( '\nCentral Header:', CDHeader, '\n' );
+  unzip( fd, CDHeader );
   for ( let i = 1; i < result.numCDRecOnDisk; i++ ) {
     CDHeader = readCDHeaderSignature( fd,  result, CDHeader.length );
     console.log( '\nCentral Header:', CDHeader, '\n' );
+    unzip( fd, CDHeader );
   }
 }
 
