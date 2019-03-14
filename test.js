@@ -10,6 +10,7 @@ https://stackoverflow.com/questions/4802097/how-does-one-find-the-start-of-the-c
 const fs = require( 'fs' );
 const os = require( 'os' );
 const path = require( 'path' );
+const zlib = require( 'zlib' );
 const tools = require( './tools' );
 
 // const source = 'E:/Data/SharedData.tvg'; // 36MB true
@@ -100,19 +101,59 @@ function readCDHeaderSignature( fd, data, i ) {
   return { found: false };
 }
 
-function unzip( fd, info ) {
-  const out = path.resolve( output, info.fName );
-  if ( tools.isdir( out ) ) return;
+function readLocalFileHeader( fd, i ) {
+  const expected = 0x04034b50;
+  const toRead = 1024;
+  const buf = Buffer.alloc( toRead, 0 );
+  fs.readSync( fd, buf, 0, toRead, i );
+  const found =  readUInt32( buf, 0 );
+  if ( true ) { //found === expected ) {
+    const data = {
+      found: found === expected,
+      vMinReq: readUInt16( buf, 4 ),
+      genPurFlag: readUInt16( buf, 6 ),
+      comprMeth: readUInt16( buf, 8 ),
+      lastModTime: readUInt16( buf, 10 ),
+      lastModDate: readUInt16( buf, 12 ),
+      crc32: readUInt32( buf, 14 ),
+      compressedSize: readUInt32( buf, 18 ),
+      unCompressedSize: readUInt32( buf, 22 ),
+      fNameLen: readUInt16( buf, 26 ),
+      extraFieldLen: readUInt16( buf,  28 ),
+    }
+    data.fName = buf.toString( 'utf8', 30, 30 + data.fNameLen );
+    data.extraField = buf.toString( 'utf8', 30 + data.fNameLen, 30 + data.fNameLen + data.extraFieldLen );
+    data.length = 30 + data.fNameLen + data.extraFieldLen;
+    return data;
+  }
+  return { found: false };
+}
 
-  const dir = path.dirname( out );
+function unzip( fd, info ) {
+  const outfilepath = path.resolve( out, info.fName );
+  if ( tools.isdir( outfilepath ) ) return;
+
+  const dir = path.dirname( outfilepath );
   tools.mkdir( dir );
 
-  const outfile = fs.createWriteStream( out );
+  const data = readLocalFileHeader( fd, info.offsetStart );
+  console.log( '\nLocal File Header\n', data, '\n' );
 
   
-
-
-
+  const outfile = fs.createWriteStream( outfilepath );
+  const infile = fs.createReadStream( '', {
+    fd: fd,
+    start: data.length + info.offsetStart,
+    end: data.length + info.offsetStart + info.compressedSize,
+    encoding: null
+  });
+  const unzip = zlib.createUnzip();
+  unzip.on( 'error', ( e ) => {
+    console.log( 'error', info.fName, e.message )
+    console.log( 'error', e )
+  });
+  infile.pipe( unzip ).pipe( outfile );
+  
 }
 
 const fd = fs.openSync( source, 'r' );
