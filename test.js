@@ -1,4 +1,5 @@
 /*
+https://en.wikipedia.org/wiki/Zip_(file_format)
 https://stackoverflow.com/questions/10308110/simplest-way-to-download-and-unzip-files-in-node-js-cross-platform
 https://stackoverflow.com/questions/11611950/unzip-a-zip-file-using-zlib
 https://stackoverflow.com/questions/10166122/zlib-differences-between-the-deflate-and-compress-functions
@@ -8,17 +9,18 @@ https://stackoverflow.com/questions/4802097/how-does-one-find-the-start-of-the-c
 
 const fs = require( 'fs' );
 const os = require( 'os' );
+const path = require( 'path' );
 const tools = require( './tools' );
 
 // const source = 'E:/Data/SharedData.tvg'; // 36MB true
 // const source = 'E:/Data/Notredame.tvg'; // 1.9GB true
 // const source = 'E:/Data/Monticello TruView.tvg'; // 8.4GB false
 // const source = 'E:/Data/LeicaShowroom 1.tvg'; // 4.2GB false
-const source = 'C:/dev/testrepo/zippStuff/testzip.zip'; // 42KB true
+const source = os.platform() === 'win32' ? 'C:/dev/testrepo/zippStuff/testzip.zip': path.resolve('./testzip.zip'); // 42KB true
 
-const out = 'E:/hitesh/junk/output';
+const out =  path.resolve( './junk' );
+tools.mkdir( out );
 
-// https://en.wikipedia.org/wiki/Zip_(file_format)
 
 function readUInt16( buf, i ) {
   return os.endianness() === 'LE' ? buf.readUInt16LE( i ) : buf.readUInt16BE( i );
@@ -28,6 +30,10 @@ function readUInt32( buf, i ) {
   return os.endianness() === 'LE' ? buf.readUInt32LE( i ) : buf.readUInt32BE( i );
 }
 
+/**
+ * Finds the End of Central Directory record
+ * @param {Buffer} buf 
+ */
 function findEOCD( buf ) {
   let eocd = 0x06054b50;
   for ( let i = 0; i < buf.length - 4; i++ ) {
@@ -51,6 +57,13 @@ function findEOCD( buf ) {
   return { found: false }
 }
 
+/**
+ * Reads the Central Directory Header located at i
+ * There is one entry for each file in the zip archive
+ * @param {fs.filehandle} fd 
+ * @param {End of Central Directory} data 
+ * @param {Number} i start of Central Directory Header
+ */
 function readCDHeaderSignature( fd, data, i ) {
   i = i || 0;
   const expected = 0x02014b50;
@@ -105,14 +118,6 @@ if ( result.found ) {
     console.log( '\nCentral Header:', CDHeader, '\n' );
   }
 }
-
-
-/*
-if (/\/$/.test(entry.fileName)) {
-    // directory file names end with '/'
-    return;
-  }
-*/
 
 
 /* trying to understand little and big endian
