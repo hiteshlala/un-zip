@@ -8,6 +8,7 @@ https://stackoverflow.com/questions/4802097/how-does-one-find-the-start-of-the-c
 
 const fs = require( 'fs' );
 const os = require( 'os' );
+const tools = require( './tools' );
 
 // const source = 'E:/Data/SharedData.tvg'; // 36MB true
 // const source = 'E:/Data/Notredame.tvg'; // 1.9GB true
@@ -105,6 +106,13 @@ if ( result.found ) {
   }
 }
 
+
+/*
+if (/\/$/.test(entry.fileName)) {
+    // directory file names end with '/'
+    return;
+  }
+*/
 
 
 /* trying to understand little and big endian
