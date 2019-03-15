@@ -154,7 +154,8 @@ async function unzip( fd, info ) {
         end: data.length + info.offsetStart + info.compressedSize,
         encoding: null
       });
-      const unzip = zlib.createUnzip();
+      // const unzip = zlib.createUnzip();
+      const unzip = zlib.createInflateRaw();
       unzip.on( 'error', ( e ) => {
         console.log( 'unzip error', info.fName, e.message )
         console.log( 'unzip error', e );
@@ -194,15 +195,14 @@ async function start () {
   console.log( '\nEnd Of Central Directory:\n', result, '\n' );
 
   if ( result.found ) {
-    let CDHeader;// = readCDHeaderSignature( fd,  result );
-    // console.log( '\nCentral Header:', CDHeader, '\n' );
-    // await unzip( fd, CDHeader );
+    let CDHeader;
     try {
       for ( let i = 0; i < result.numCDRecOnDisk; i++ ) {
         const index = CDHeader ? CDHeader.length : 0;
         CDHeader = readCDHeaderSignature( fd,  result, index );
         console.log( '\nCentral Header:', CDHeader, '\n' );
-        await unzip( fd, CDHeader );
+        // await unzip( fd, CDHeader );
+        await unzip( fs.openSync( source, 'r'), CDHeader );
       }
     }
     catch( e ) {
