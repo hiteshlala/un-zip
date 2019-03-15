@@ -129,9 +129,12 @@ function readLocalFileHeader( fd, i ) {
   return { found: false };
 }
 
-function unzip( fd, info ) {
+async function unzip( fd, info ) {
   const outfilepath = path.resolve( out, info.fName );
-  if ( tools.isdir( outfilepath ) ) return;
+  if ( info.compressedSize == 0 ) {
+    tools.mkdir( outfilepath );
+    return;
+  }
 
   const dir = path.dirname( outfilepath );
   tools.mkdir( dir );
@@ -139,44 +142,75 @@ function unzip( fd, info ) {
   const data = readLocalFileHeader( fd, info.offsetStart );
   console.log( '\nLocal File Header\n', data, '\n' );
 
-  
-  const outfile = fs.createWriteStream( outfilepath );
-  const infile = fs.createReadStream( '', {
-    fd: fd,
-    start: data.length + info.offsetStart,
-    end: data.length + info.offsetStart + info.compressedSize,
-    encoding: null
-  });
-  const unzip = zlib.createUnzip();
-  unzip.on( 'error', ( e ) => {
-    console.log( 'error', info.fName, e.message )
-    console.log( 'error', e )
-  });
-  infile.pipe( unzip ).pipe( outfile );
+  // /*
+  try {
+    const prom = async () => new Promise(( resolve, reject) => {
+      console.log( Date.now() )
+      // /*
+      const outfile = fs.createWriteStream( outfilepath );
+      const infile = fs.createReadStream( '', {
+        fd: fd,
+        start: data.length + info.offsetStart,
+        end: data.length + info.offsetStart + info.compressedSize,
+        encoding: null
+      });
+      const unzip = zlib.createUnzip();
+      unzip.on( 'error', ( e ) => {
+        console.log( 'unzip error', info.fName, e.message )
+        console.log( 'unzip error', e );
+        reject( e );
+      });
+      unzip.on( 'close', () => { resolve(); });
+      infile.pipe( unzip ).pipe( outfile );
+      outfile.on( 'close', () => { resolve(); });
+      outfile.on( 'error', (e) => { 
+        console.log( 'outfile error', e );
+        reject(e); 
+      });
+      // */
+    });
+    await prom();
+    return;
+  }
+  catch( e ) {
+    console.log( 'error in try catch ', e );
+    return;
+  }
+  // */
   
 }
 
-const fd = fs.openSync( source, 'r' );
-const stat = fs.statSync( source );
-console.log( stat );
-const toRead = 1024;
-const buf = Buffer.alloc( toRead, 0 );
-fs.readSync( fd, buf, 0, toRead, stat.size - toRead );
-console.log( buf )
-const result = findEOCD( buf );
-console.log( '\nEnd Of Central Directory:\n', result, '\n' );
 
-if ( result.found ) {
-  let CDHeader = readCDHeaderSignature( fd,  result );
-  console.log( '\nCentral Header:', CDHeader, '\n' );
-  unzip( fd, CDHeader );
-  for ( let i = 1; i < result.numCDRecOnDisk; i++ ) {
-    CDHeader = readCDHeaderSignature( fd,  result, CDHeader.length );
-    console.log( '\nCentral Header:', CDHeader, '\n' );
-    unzip( fd, CDHeader );
+async function start () {
+
+  const fd = fs.openSync( source, 'r' );
+  const stat = fs.statSync( source );
+  console.log( stat );
+  const toRead = 1024;
+  const buf = Buffer.alloc( toRead, 0 );
+  fs.readSync( fd, buf, 0, toRead, stat.size - toRead );
+  console.log( buf )
+  const result = findEOCD( buf );
+  console.log( '\nEnd Of Central Directory:\n', result, '\n' );
+
+  if ( result.found ) {
+    let CDHeader;// = readCDHeaderSignature( fd,  result );
+    // console.log( '\nCentral Header:', CDHeader, '\n' );
+    // await unzip( fd, CDHeader );
+    try {
+      for ( let i = 0; i < result.numCDRecOnDisk; i++ ) {
+        const index = CDHeader ? CDHeader.length : 0;
+        CDHeader = readCDHeaderSignature( fd,  result, index );
+        console.log( '\nCentral Header:', CDHeader, '\n' );
+        await unzip( fd, CDHeader );
+      }
+    }
+    catch( e ) {
+      console.log( 'in for loop', e );
+    }
   }
 }
-
+ start();
 
 /* trying to understand little and big endian
 
