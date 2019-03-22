@@ -259,7 +259,44 @@ async function inflate( fd, cdh, lfh, out ) {
   
 }
 
+async function copy( fd, cdh, lfh, out ) {
+  const outfilepath = path.resolve( out, cdh.fName );
+  if ( cdh.compressedSize == 0 ) {
+    return;
+  }
 
+  const dir = path.dirname( outfilepath );
+  mkdir( dir );
+
+  // /*
+  try {
+    const prom = async () => new Promise(( resolve, reject) => {
+      // /*
+      const outfile = fs.createWriteStream( outfilepath );
+      const infile = fs.createReadStream( '', {
+        fd: fd,
+        start: lfh.length + cdh.offsetStart,
+        end: lfh.length + cdh.offsetStart + cdh.compressedSize,
+        encoding: null
+      });
+      infile.pipe( outfile );
+      outfile.on( 'close', () => { resolve(); });
+      outfile.on( 'error', (e) => { 
+        console.log( 'outfile error', e );
+        reject(e); 
+      });
+      // */
+    });
+
+    return await prom();
+  }
+  catch( e ) {
+    console.log( 'error in try catch ', e );
+    return e;
+  }
+  // */
+  
+}
 
 module.exports = {
   mkdir,
@@ -269,6 +306,7 @@ module.exports = {
   readZECDL,
   readZECDR,
   readLFH,
-  inflate
+  inflate,
+  copy
 
 };

@@ -19,9 +19,9 @@ const path = require( 'path' );
 const t = require( './tools' );
 
 
-// const source =  path.resolve( './tvgbackup_5c8d5fe24687b7000505f2d1.zip');
+const source =  path.resolve( './tvgbackup_5c8d5fe24687b7000505f2d1.zip');
 // const source =  path.resolve('./testzip.zip'); // 42KB true
-const source = path.resolve( './Notredame.tvg' );
+// const source = path.resolve( './Notredame.tvg' );
 // const source = 'E:/Data/Notredame.tvg';
 // const source = 'E:/Data/SharedData.tvg'; // 36MB true
 // const source = 'E:/Data/LeicaShowroom 1.tvg'; // 4.2GB false
@@ -70,7 +70,13 @@ async function start () {
   let index = 0;
   let cdh;
   let count = 0;
+  // records = 10;
+  const missing = [];
+  let inflated = 0;
+  let copied = 0;
+  let unknown = 0;
   for ( let i = 0; i < records; i++ ) {
+    console.log( `\n ==== Processing Record: ${i} ====`);
     index = cdh ? cdh.length + index : 0;
     cdh = t.readCDH( buf, index );
     console.log( '\nCDH:', cdh, '\n' );
@@ -79,14 +85,33 @@ async function start () {
     if ( lfh.found ) {
       count++;
       try {
-        await t.inflate( fs.openSync( source, 'r'), cdh, lfh, out );
+        if ( lfh.comprMeth === 8 ) {
+          inflated++;
+          await t.inflate( fs.openSync( source, 'r'), cdh, lfh, out );
+        }
+        else if ( lfh.comprMeth === 0 ) {
+          copied++;
+          await t.copy( fs.openSync( source, 'r'), cdh, lfh, out );
+        }
+        else {
+          unknown++;
+          console.log( 'unknown compression method, do nothing' );
+        }
       }
       catch( e ) {
         console.log( 'in for loop', e );
       }
     }
+    else {
+      missing.push( i )
+    }
   }
+  console.log( '\n =========== Summary =========== \n')
   console.log( 'Records:', records, 'Found:', count );
+  console.log( 'Missing:', missing );
+  console.log(  'Inflated:', inflated );
+  console.log( 'Copied:', copied );
+  console.log( 'Unknown:', unknown );
   
 }
 
