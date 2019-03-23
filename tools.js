@@ -64,6 +64,48 @@ function readUInt64( buf, i ) {
 
 }
 
+
+function readEF( buf, read, i ) {
+  i = i || 0;
+  result = {};
+  if ( buf.length === 0 ) return result;
+  const header = readUInt16( buf, i );
+  const datasize = readUInt16( buf, i + 2 );
+  
+  if ( header !== 0x0001 ) {
+    console.log( 'EF Zip64 record not found' );
+    return {};
+    if ( buf.length < datasize ) return {};
+    return readEF( buf.slice(  datasize + 4 ), read );
+  }
+
+  const expectedsize = (read.unCompressedSize && 8 ) + (read.compressedSize && 8 ) + (read.offsetStart && 8) + ( read.diskNoStart && 4 );
+  if ( read.unCompressedSize ) {
+    result.unCompressedSize = readUInt64( buf, i + 4 );
+    result.compressedSize = readUInt64( buf, i + 12 );
+    if ( read.offsetStart ) {
+      result.offsetStart = readUInt64( buf, i + 20);
+      if ( read.diskNoStart ) {
+        result.diskNoStart = readUInt16( buf, i + 28 )
+      } 
+    }
+    else if ( read.diskNoStart ) {
+      result.diskNoStart = readUInt16( buf, i + 20 )
+    }
+  }
+  else if ( read.offsetStart ) {
+    result.offsetStart = readUInt64( buf, i + 4 );
+    if ( read.diskNoStart ) {
+      result.diskNoStart = readUInt16( buf, i + 12 )
+    } 
+  }
+  else if ( read.diskNoStart ) {
+    result.diskNoStart = readUInt16( buf, i + 4 )
+  }
+  return result;
+}
+
+
 /**
  * Finds the End of Central Directory record
  * @param {Buffer} buf buffer containing part of the zip archive
@@ -120,6 +162,7 @@ function readCDH( buf, i ) {
   const expected = 0x02014b50;
   const found = readUInt32( buf, 0 );
   if ( found === expected ) {
+    // console.log( 'Get hrer', found );
     const data = {
       found: found === expected,
       vMade: readUInt16( buf, i + 4 ),
@@ -140,9 +183,33 @@ function readCDH( buf, i ) {
       offsetStart: readUInt32( buf, i + 42 ),
     }
     data.fName = buf.toString( 'utf8', i + 46, i + 46 + data.fNameLen );
-    data.extraField = buf.toString( 'utf8', i + 46 + data.fNameLen, i + 46 + data.fNameLen + data.extraFieldLen );
     data.comment = buf.toString( 'utf8', i + 46 + data.fNameLen + data.extraFieldLen, i + 46 + data.fNameLen + data.extraFieldLen + data.fCommentLen );
     data.length = 46 + data.fNameLen + data.extraFieldLen + data.fCommentLen;
+    console.log( '\nDebug:\n', data )
+    const extraBuf = buf.slice( i + 46 + data.fNameLen, i + 46 + data.fNameLen + data.extraFieldLen );
+    const readZ64Extra = {
+      unCompressedSize: false,
+      compressedSize: false,
+      offsetStart: false,
+      diskNoStart: false
+    }
+    if ( data.offsetStart === 0xffffffff ) {
+      readZ64Extra.offsetStart = true;
+    }
+    if ( data.compressedSize === 0xffff || data.unCompressedSize === 0xffff ) {
+      readZ64Extra.unCompressedSize = true;
+      readZ64Extra.compressedSize = true;
+    }
+    if ( data.diskNoStart === 0xffff ) {
+      readZ64Extra.diskNoStart = true;
+    }
+    // /*
+    data.extraField = readEF( extraBuf, readZ64Extra );
+    data.unCompressedSize = readZ64Extra.unCompressedSize ? data.extraField.unCompressedSize : data.unCompressedSize
+    data.compressedSize = readZ64Extra.compressedSize ? data.extraField.compressedSize : data.compressedSize;
+    data.diskNoStart = readZ64Extra.diskNoStart ? data.extraField.diskNoStart : data.diskNoStart;
+    data.offsetStart = readZ64Extra.offsetStart ? data.extraField.offsetStart: data.offsetStart;
+    // */
     return data;
   }
   return { found: false };

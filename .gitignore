@@ -1,3 +1,4 @@
 *.zip
 *.tvg
 junk
+.DS_Store

@@ -19,14 +19,16 @@ const path = require( 'path' );
 const t = require( './tools' );
 
 
-const source =  path.resolve( './tvgbackup_5c8d5fe24687b7000505f2d1.zip');
-// const source =  path.resolve('./testzip.zip'); // 42KB true
+// const source =  path.resolve( './tvgbackup_5c8d5fe24687b7000505f2d1.zip');
+const source =  path.resolve('./testzip.zip'); // 42KB true
 // const source = path.resolve( './Notredame.tvg' );
+// const source = path.resolve('./LeicaShowroom 1.tvg' ); // 4.2GB false
 // const source = 'E:/Data/Notredame.tvg';
 // const source = 'E:/Data/SharedData.tvg'; // 36MB true
 // const source = 'E:/Data/LeicaShowroom 1.tvg'; // 4.2GB false
 // const source = 'E:/Data/Monticello TruView.tvg'; // 8.4GB false
 
+console.log( 'filename:', source );
 
 const out =  path.resolve( './junk' );
 t.mkdir( out );
@@ -35,7 +37,10 @@ t.mkdir( out );
 async function start () {
 
   const fd = fs.openSync( source, 'r' );
+
   const stat = fs.statSync( source );
+  console.log( '\nStat:\n', stat );
+  
   const toRead = 1024;
 
   let buf = Buffer.alloc( toRead, 0 );
@@ -70,7 +75,7 @@ async function start () {
   let index = 0;
   let cdh;
   let count = 0;
-  // records = 10;
+  // records = 3;
   const missing = [];
   let inflated = 0;
   let copied = 0;
@@ -104,6 +109,7 @@ async function start () {
     }
     else {
       missing.push( i )
+      break; //debug
     }
   }
   console.log( '\n =========== Summary =========== \n')
@@ -112,6 +118,8 @@ async function start () {
   console.log(  'Inflated:', inflated );
   console.log( 'Copied:', copied );
   console.log( 'Unknown:', unknown );
+  console.log( '\nECDR:\n', ecdr, '\n' );
+  console.log( '\nZECDL:\n', zecdl, '\n' );
   
 }
 
