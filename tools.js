@@ -3,6 +3,7 @@ const path = require( 'path' );
 const os = require( 'os' );
 const zlib = require( 'zlib' );
 
+const verbose = false;
 /**
  * Make directory structure recursively
  * @param {string} p 
@@ -10,7 +11,7 @@ const zlib = require( 'zlib' );
 function mkdir( p ) {
   try {
     fs.mkdirSync( p );
-    console.log( 'Created', p );
+    verbose && console.log( 'Created', p );
   }
   catch ( e ) {
     if ( e.code === 'ENOENT' ) {
@@ -18,10 +19,10 @@ function mkdir( p ) {
       mkdir( p );
     }
     else if ( e.code === 'EEXIST' ) {
-      console.log( p, 'already exists' );
+      verbose && console.log( p, 'already exists' );
     }
     else {
-      console.log( p, e.code );
+      verbose && console.log( p, e.code );
       throw e;
     }
   }
@@ -185,7 +186,6 @@ function readCDH( buf, i ) {
     data.fName = buf.toString( 'utf8', i + 46, i + 46 + data.fNameLen );
     data.comment = buf.toString( 'utf8', i + 46 + data.fNameLen + data.extraFieldLen, i + 46 + data.fNameLen + data.extraFieldLen + data.fCommentLen );
     data.length = 46 + data.fNameLen + data.extraFieldLen + data.fCommentLen;
-    console.log( '\nDebug:\n', data )
     const extraBuf = buf.slice( i + 46 + data.fNameLen, i + 46 + data.fNameLen + data.extraFieldLen );
     const readZ64Extra = {
       unCompressedSize: false,

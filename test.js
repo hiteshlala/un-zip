@@ -18,15 +18,18 @@ const fs = require( 'fs' );
 const path = require( 'path' );
 const t = require( './tools' );
 
+const verbose = false;
+
 
 // const source =  path.resolve( './tvgbackup_5c8d5fe24687b7000505f2d1.zip');
-const source =  path.resolve('./testzip.zip'); // 42KB true
+// const source =  path.resolve('./testzip.zip'); // 42KB true
 // const source = path.resolve( './Notredame.tvg' );
 // const source = path.resolve('./LeicaShowroom 1.tvg' ); // 4.2GB false
 // const source = 'E:/Data/Notredame.tvg';
 // const source = 'E:/Data/SharedData.tvg'; // 36MB true
 // const source = 'E:/Data/LeicaShowroom 1.tvg'; // 4.2GB false
 // const source = 'E:/Data/Monticello TruView.tvg'; // 8.4GB false
+const source = 'E:/Data/surmont_s1.tvg';
 
 console.log( 'filename:', source );
 
@@ -35,11 +38,11 @@ t.mkdir( out );
 
 
 async function start () {
-
+  const starttime = Date.now();
   const fd = fs.openSync( source, 'r' );
 
   const stat = fs.statSync( source );
-  console.log( '\nStat:\n', stat );
+  verbose && console.log( '\nStat:\n', stat );
   
   const toRead = 1024;
 
@@ -47,13 +50,13 @@ async function start () {
   fs.readSync( fd, buf, 0, toRead, stat.size - toRead );
   
   const ecdr = t.readECDR( buf );
-  console.log( '\nECDR:\n', ecdr, '\n' );
+  verbose && console.log( '\nECDR:\n', ecdr, '\n' );
 
   const zecdl = t.readZECDL( buf );
-  console.log( '\nZECDL:\n', zecdl, '\n' );
+  verbose && console.log( '\nZECDL:\n', zecdl, '\n' );
 
   const zecdr = zecdl.found && t.readZECDR( fd, zecdl.startZip64CD );
-  zecdl.found && console.log( 'ZECDR', zecdr );
+  verbose && zecdl.found && console.log( 'ZECDR', zecdr );
 
   let records = 0;
 
@@ -81,12 +84,12 @@ async function start () {
   let copied = 0;
   let unknown = 0;
   for ( let i = 0; i < records; i++ ) {
-    console.log( `\n ==== Processing Record: ${i} ====`);
+    verbose && console.log( `\n ==== Processing Record: ${i} ====`);
     index = cdh ? cdh.length + index : 0;
     cdh = t.readCDH( buf, index );
-    console.log( '\nCDH:', cdh, '\n' );
+    verbose && console.log( '\nCDH:', cdh, '\n' );
     const lfh = t.readLFH( fd, cdh.offsetStart )
-    console.log( '\nLFH:\n', lfh );
+    verbose && console.log( '\nLFH:\n', lfh );
     if ( lfh.found ) {
       count++;
       try {
@@ -109,7 +112,7 @@ async function start () {
     }
     else {
       missing.push( i )
-      break; //debug
+      // break; //debug
     }
   }
   console.log( '\n =========== Summary =========== \n')
@@ -120,6 +123,7 @@ async function start () {
   console.log( 'Unknown:', unknown );
   console.log( '\nECDR:\n', ecdr, '\n' );
   console.log( '\nZECDL:\n', zecdl, '\n' );
+  console.log( 'Elapsed time:', Date.now() - starttime, '\n' );
   
 }
 
