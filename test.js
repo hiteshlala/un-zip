@@ -92,15 +92,15 @@ async function start () {
       try {
         if ( lfh.comprMeth === 8 ) {
           inflated++;
-          await t.inflate( fs.openSync( source, 'r'), cdh, lfh, out );
+          await t.inflate( fs.openSync( source, 'r' ), cdh, lfh, out );
         }
         else if ( lfh.comprMeth === 0 ) {
           copied++;
-          await t.copy( fs.openSync( source, 'r'), cdh, lfh, out );
+          await t.copy( fs.openSync( source, 'r' ), cdh, lfh, out );
         }
         else {
           unknown++;
-          console.log( 'unknown compression method, do nothing' );
+          console.log( `Unsupported compression method ( ${lfh.comprMeth} ), skipping` );
         }
       }
       catch( e ) {
@@ -109,7 +109,7 @@ async function start () {
     }
     else {
       missing.push( i )
-      break; //debug
+      // break; //debug
     }
   }
   console.log( '\n =========== Summary =========== \n')

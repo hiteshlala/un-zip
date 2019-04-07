@@ -1,158 +1,149 @@
-/*
-https://stackoverflow.com/questions/10308110/simplest-way-to-download-and-unzip-files-in-node-js-cross-platform
-https://stackoverflow.com/questions/11611950/unzip-a-zip-file-using-zlib
-https://stackoverflow.com/questions/10166122/zlib-differences-between-the-deflate-and-compress-functions
-https://stackoverflow.com/questions/4802097/how-does-one-find-the-start-of-the-central-directory-in-zip-files
-
-https://en.wikipedia.org/wiki/Zip_(file_format)
-
-*/
-
-const spawn = require( 'child_process' ).spawn;
 const fs = require( 'fs' );
+const path = require( 'path' );
+const t = require( './tools' );
 
-class Unzip {
-  constructor( filePath, destPath ) {
-    if ( !filePath || typeof filePath !== 'string' ) {
-      throw new Error( `${filePath} - is not 'string' path to the archive.` );
-    }
-    this.filePath = filePath;
-    this.destPath = destPath;
-    this.fileInfo = fs.statSync( filePath );
-    this.fd = fs.openSync( this.filePath, 'r' );
-  }
-
-  get info() {
-    return this.fileInfo;
-  }
-
-  readDirectory1() {
-    return new Promise(( resolve, reject ) => {
-      let found = false;
-      let index = 0;
-      let count = 0;
-      const str = fs.createReadStream( this.filePath );
-      str.on( 'data', d => {
-        str.pause();
-        console.log( 'chunk:', count, d.length );
-        const result = this.findEOCD( d );
-        found = result.found;
-        index = result.index;
-        count += d.length;
-        if ( found ) {
-          str.destroy(0);
-          console.log( 'found in read Dir' )
-          resolve( {
-            index,
-            count,
-            found
-          })
-        }
-        else {
-          str.resume();
-        }
-      });
-      str.on( 'close', e => {
-        if( e !== 0 ) {
-          reject( e );
-        }
-        else {
-          resolve({
-            index,
-            count,
-            found: false
-          });
-        }
-      } )
-    });
-  }
-
-  findEOCD( buf ) {
-    let eocd = 0x06054b50;
-    for ( let i = 0; i < buf.length - 4; i++ ) {
-      let a = buf.readUInt32LE( i );
-      if ( a === eocd ) {
-        return { index: i, found: true };
+class Unzippy {
+  constructor( options ) {
+    this.src = path.resolve(options.src || '' );
+    this.dest = path.resolve( options.dest || './' );
+    this.dir; // []
+    this.errorState = false;
+    this.threads = options.threads || 1;
+    try {
+      const toRead = 1024;
+      this.stat = fs.statSync( this.src );
+      this.fd = fs.openSync( this.src, 'r' );
+      let buf = Buffer.alloc( toRead, 0 );
+      fs.readSync( this.fd, buf, 0, toRead, this.stat.size - toRead );
+      this.ecdr = t.readECDR( buf );
+      this.zecdl = this.ecdr && t.readZECDL( buf );
+      this.zecdr = this.zecdl.found && t.readZECDR( this.fd, this.zecdl.startZip64CD );
+      if ( !this.ecdr.found ) {
+        this.error = 'Unrecognized file archive.';
+        this.errorState = true;
       }
     }
-    return { found: false }
+    catch( e ) {
+      this.error = e.message || e;
+      this.errorState = true;
+    }
   }
-
-  readDirectory() {
-      let found = false;
+  async unzip() {
+    if ( this.errorState ) { throw new Error( this.error ); }
+    if ( !this.dir ) {
+      this.getDir();
+    }
+    let processing = 0;
+    const threads = [];
+    const errors = [];
+    const success = [];
+    const processOne = async () => {
+      try {
+        if ( processing < this.dir.length ) {
+          const index = processing;
+          processing++;
+          const result = await this.extractSingle( index );
+          success.push( result );
+          return processOne();
+        }
+        else {
+          return Promise.resolve();
+        }
+      }
+      catch( e ) {
+        errors.push( e );
+        return processOne();
+      }
+    };
+    for( let i = 0; i < this.threads; i++ ) {
+      threads.push( processOne() );
+    }
+    return Promise.all( threads )
+    .then( () => {
+      return {
+        errors,
+        success
+      };
+    })
+  }
+  getDir() {
+    if ( this.errorState ) { throw new Error( this.error ); }
+    if ( this.dir ) { return this.dir; }
+    else {
+      const { ecdr, zecdl, fd, zecdr } = this;
+      let buf;
+      let records;
+      if ( ecdr.found && !zecdl.found ) {
+        const toRead = ecdr.sizeCDRecord;
+        const start = ecdr.startCD;
+        records = ecdr.numCDRecOnDisk;
+        buf = Buffer.alloc( toRead, 0 );
+        fs.readSync( fd, buf, 0, toRead, start );
+      }
+      else if ( zecdl.found ) {
+        const toRead = zecdr.sizeCDRecord;
+        const start = zecdr.startCD;
+        records = zecdr.numCDRecOnDisk;
+        buf = Buffer.alloc( toRead, 0 );
+        fs.readSync( fd, buf, 0, toRead, start );
+      }
+      this.dir = [];
       let index = 0;
-      let count = 0;
-      const str = fs.createReadStream( this.filePath );
-      str.on( 'data', d => {
-        str.pause();
-        console.log( 'chunk:', count, d.length );
-        const result = this.findEOCD( d );
-        found = result.found;
-        index = result.index;
-        count += d.length;
-        if ( found ) {
-          str.destroy(0);
-          console.log( 'found in read Dir' )
-          resolve( {
-            index,
-            count,
-            found
-          })
-        }
-        else {
-          str.resume();
-        }
-      });
-      str.on( 'close', e => {
-        if( e !== 0 ) {
-          reject( e );
-        }
-        else {
-          resolve({
-            index,
-            count,
-            found: false
-          });
-        }
-      } )
+      let cdh;
+      for ( let i = 0; i < records; i++ ) {
+        index = cdh ? cdh.length + index : 0;
+        cdh = t.readCDH( buf, index );
+        this.dir.push( cdh );
+      }
+      return this.dir;
+    }
   }
-  
-
-
-}
-
-function zlibUnzip( source, dest ) {
-  return new Promise(( resolve, reject ) => {
-    const inFile = fs.createReadStream( source );
-
-    inFile.on( 'data', ( chunk ) => {
-      console.log( 'chunk.length', chunk.length );
-      console.log( 'chunk', chunk );
-      console.log( 'chunk', Buffer.isBuffer( chunk ) );
-
-      zlib.gunzip( chunk, ( e, d ) => {
-        if ( e ) { 
-          console.log( 'error decoding chunk', e );
+  async extractSingle( id ) {
+    if ( this.errorState ) { return new Error( this.error ); }
+    if ( typeof id !== 'number' || id >= this.dir.length ) { return new Error( 'Invalid id'); }
+    const cdh = this.dir[ id ];
+    const lfh = t.readLFH( this.fd, cdh.offsetStart )
+    // console.log( '\nLFH:\n', lfh );
+    if ( lfh.found ) {
+      try {
+        if ( lfh.comprMeth === 8 ) {
+          await t.inflate( fs.openSync( this.src, 'r' ), cdh, lfh, this.dest );
+          return { extracted: cdh.fName };
+        }
+        else if ( lfh.comprMeth === 0 ) {
+          await t.copy( fs.openSync( this.src, 'r' ), cdh, lfh, this.dest );
+          return { extracted: cdh.fName };
         }
         else {
-          console.log( 'inflated chunk.length', d.length );
+          const msg = `Error extracting file [ ${cdh.fName} ] -Unsupported compression method ( ${lfh.comprMeth} ), skipping`;
+          console.log( msg );
+          return new Error( msg );
         }
-      });
-    });    
+      }
+      catch( e ) {
+        const msg = `Error extracting file [ ${cdh.fName} ] - ${ e.message || e }`;
+        console.log( msg );
+        return new Error( msg );
+      }
+    }
+    else {
+      const msg = `Error extracting file [ ${cdh.fName} ] - Unable to find the local file header (lfh)`;
+      console.log( msg );
+      return new Error( msg );
+    }
 
-    inFile.on( 'end', code => {
-      if ( code !== 0 ) reject( code );
-      else resolve();
-    });
+  }
 
-    inFile.on( 'error', error => {
-      console.log( 'error in stream' )
-      reject( error );
-    });
-  });
+
 }
 
+module.exports.Unzippy = Unzippy;
 
-module.exports = Unzip;
+module.exports.unzip = async ( src, dest, options ) => {
+  const threads = options ? options.threads || 1 : 1;
+  if ( !src || !dest ) return new Error( 'Source path or Destination path missing' );
+  const u = new Unzippy({ src, dest, threads });
+  return u.unzip();
+}
 
 

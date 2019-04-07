@@ -73,7 +73,7 @@ function readEF( buf, read, i ) {
   const datasize = readUInt16( buf, i + 2 );
   
   if ( header !== 0x0001 ) {
-    console.log( 'EF Zip64 record not found' );
+    // console.log( 'EF Zip64 record not found' );
     return {};
     if ( buf.length < datasize ) return {};
     return readEF( buf.slice(  datasize + 4 ), read );
@@ -185,7 +185,6 @@ function readCDH( buf, i ) {
     data.fName = buf.toString( 'utf8', i + 46, i + 46 + data.fNameLen );
     data.comment = buf.toString( 'utf8', i + 46 + data.fNameLen + data.extraFieldLen, i + 46 + data.fNameLen + data.extraFieldLen + data.fCommentLen );
     data.length = 46 + data.fNameLen + data.extraFieldLen + data.fCommentLen;
-    console.log( '\nDebug:\n', data )
     const extraBuf = buf.slice( i + 46 + data.fNameLen, i + 46 + data.fNameLen + data.extraFieldLen );
     const readZ64Extra = {
       unCompressedSize: false,
