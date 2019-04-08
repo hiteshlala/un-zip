@@ -1,4 +1,4 @@
-# <p><img src="logo.png" alt="Logo" width="50px" height="50px" style="vertical-align:middle"/> Unzippy </p>
+<h1> <img src="logo.png" alt="Logo" width="50px" height="50px" style="vertical-align:middle"/> Unzippy </h1>
 
 ## A Node.js unzip library
 
@@ -20,7 +20,7 @@
 
 Simplest extraction:
 ```
-  const { unzip } = require( 'unzippy.' );
+  const { unzip } = require( 'unzippy' );
 
   const source = 'path_some_zip_archive.zip';
   const dest = 'path_to_place_to_write_artifacts';
@@ -33,7 +33,7 @@ Simplest extraction:
 
 Add more options:
 ```
-  const { Unzippy } = require( 'unzippy.' );
+  const { Unzippy } = require( 'unzippy' );
 
   const source = 'path_some_zip_archive.zip';
   const dest = 'path_to_place_to_write_artifacts';
@@ -63,6 +63,53 @@ Add more options:
 
 ## API
 
+### Class Unzippy
+
+Constructor
+---
+
+Takes an options object:
+```
+{
+  src: < String: path to source archive >,
+  dest: < String: path to where to unzip >,
+  threads: < Number: number of threads >
+
+  // planned options to come in future release:
+  // logfile: < Boolean: create a log file>
+  // verbose: < Allow logging to console >
+
+}
+```
+
+.getDir()
+---
+
+Returns an Array containing an Object for each artifact in archive.
+
+
+.extractSingle( id )
+---
+
+Extracts a single artifact and returns a Promise.
+
+
+.unzip()
+---
+
+Extracts all artifacts and returns a Promise.
+
+
+### unzip
+
+unzip( src, dest, options )
+---
+
+src - path to source archive
+
+dest - path to where to unzip
+
+options - an Object with optional `threads` key with a number value.
 
 
 
