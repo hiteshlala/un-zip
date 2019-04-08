@@ -1,3 +1,11 @@
+<style>
+  img {
+    vertical-align: middle;
+    width: 50px;
+    height: 50px;
+  }
+</style>
+
 # <img src="logo.png" alt="Logo" width="50px" height="50px" style="vertical-align:middle"/> Unzippy
 
 ## A Node.js unzip library
