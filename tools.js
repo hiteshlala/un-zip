@@ -1,5 +1,5 @@
 /**
- * Un-zip - A Node.js unzip library Copyright 2019 Hitesh Lala
+ * Unzippy - A Node.js unzip library Copyright 2019 Hitesh Lala
  * This file is covered by the License file in the root of this project https://github.com/hiteshlala/unzippy
  */
 
