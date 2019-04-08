@@ -20,7 +20,7 @@
 ## Examples
 
 Simplest extraction:
-```
+```javascript
   const { unzip } = require( 'unzippy' );
 
   const source = 'path_some_zip_archive.zip';
@@ -33,7 +33,7 @@ Simplest extraction:
 ```
 
 Add more options:
-```
+```javascript
   const { Unzippy } = require( 'unzippy' );
 
   const source = 'path_some_zip_archive.zip';
@@ -70,7 +70,7 @@ Add more options:
 
   - Takes an options object:
 
-    ```
+    ```javascript
     {
       src: < String: path to source archive >,
       dest: < String: path to where to unzip >,
