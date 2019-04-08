@@ -1,5 +1,5 @@
 
-<h1> <img src="logo.png" alt="Logo" width="50px" height="50px" style="vertical-align:middle"/> Unzippy </h1>
+<h1> <img src="logo.png" alt="Logo" width="50px" height="50px" style="vertical-align:middle"/> Un-zip </h1>
 
 ## A Node.js unzip library
 
@@ -21,7 +21,7 @@
 
 Simplest extraction:
 ```javascript
-  const { unzip } = require( 'unzippy' );
+  const { unzip } = require( 'un-zip' );
 
   const source = 'path_some_zip_archive.zip';
   const dest = 'path_to_place_to_write_artifacts';
@@ -34,7 +34,7 @@ Simplest extraction:
 
 Add more options:
 ```javascript
-  const { Unzippy } = require( 'unzippy' );
+  const { Unzippy } = require( 'un-zip' );
 
   const source = 'path_some_zip_archive.zip';
   const dest = 'path_to_place_to_write_artifacts';

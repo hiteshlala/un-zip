@@ -1,5 +1,5 @@
 {
-  "name": "unzippy",
+  "name": "un-zip",
   "version": "0.0.1",
   "description": "A Node.js unzip library",
   "main": "unzippy.js",
