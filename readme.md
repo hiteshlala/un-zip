@@ -1,22 +1,23 @@
+
 <h1> <img src="logo.png" alt="Logo" width="50px" height="50px" style="vertical-align:middle"/> Unzippy </h1>
 
 ## A Node.js unzip library
 
-- Zero dependencies.
+  - Zero dependencies.
 
-- Uncompresses Deflate archives ( default for most zip libraries ).
+  - Uncompresses Deflate archives ( default for most zip libraries ).
 
-- Set number of worker threads ( default is 1 ).
+  - Set number of worker threads ( default is 1 ).
+
+  - Provides a directory listing of archive.
+
+  - Selectively inflate individual items.
+
+  - Does not verifiy size or calculate CRC32 of artifacts.
 
 
-- Provides a directory listing of archive.
 
-- Selectively inflate individual items.
-
-- Does not verifiy size or calculate CRC32 of artifacts.
-
-
-## API Examples
+## Examples
 
 Simplest extraction:
 ```
@@ -65,51 +66,47 @@ Add more options:
 
 ### Class Unzippy
 
-Constructor
----
+- <b>new Unzippy( options )</b>
 
-Takes an options object:
-```
-{
-  src: < String: path to source archive >,
-  dest: < String: path to where to unzip >,
-  threads: < Number: number of threads >
+  - Takes an options object:
 
-  // planned options to come in future release:
-  // logfile: < Boolean: create a log file>
-  // verbose: < Allow logging to console >
+    ```
+    {
+      src: < String: path to source archive >,
+      dest: < String: path to where to unzip >,
+      threads: < Number: number of threads >
 
-}
-```
+      // planned options to come in future release:
+      // logfile: < Boolean: create a log file>
+      // verbose: < Allow logging to console >
 
-.getDir()
----
+    }
+    ```
 
-Returns an Array containing an Object for each artifact in archive.
+- <b>.getDir()</b>
 
-
-.extractSingle( id )
----
-
-Extracts a single artifact and returns a Promise.
+  - Returns an Array containing an Object for each artifact in archive.
 
 
-.unzip()
----
+- <b>.extractSingle( id )</b>
 
-Extracts all artifacts and returns a Promise.
+  - Extracts a single artifact and returns a Promise.
+
+
+- <b>.unzip()</b>
+
+  - Extracts all artifacts and returns a Promise.
 
 
 ### unzip
 
-unzip( src, dest, options )
----
+- <b>unzip( src, dest, options )</b>
 
-src - path to source archive
+  - src - path to source archive
 
-dest - path to where to unzip
+  - dest - path to where to unzip
 
-options - an Object with optional `threads` key with a number value.
+  - options - an Object with optional `threads` key with a number value.
 
 
 
