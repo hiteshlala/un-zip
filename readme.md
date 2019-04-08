@@ -1,5 +1,5 @@
 
-<h1> <img src="logo.png" alt="Logo" width="50px" height="50px" style="vertical-align:middle"/> Unzippy </h1>
+<h1> <img src="https://raw.githubusercontent.com/hiteshlala/unzippy/master/logo.png" alt="Logo" width="50px" height="50px" style="vertical-align:middle"/> Unzippy </h1>
 
 ## A Node.js unzip library
 
