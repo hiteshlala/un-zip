@@ -1,4 +1,4 @@
-# <div><img src="logo.png" alt="Logo" width="50px" height="50px" style="vertical-align:middle"/> Unzippy </div>
+# <p><img src="logo.png" alt="Logo" width="50px" height="50px" style="vertical-align:middle"/> Unzippy </p>
 
 ## A Node.js unzip library
 
