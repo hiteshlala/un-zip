@@ -35,7 +35,9 @@ class Unzippy {
     }
   }
   async unzip() {
-    if ( this.errorState ) { throw new Error( this.error ); }
+    if ( this.errorState ) { 
+      return Promise.reject( new Error( this.error ) ); 
+    }
     if ( !this.dir ) {
       this.getDir();
     }
@@ -73,8 +75,12 @@ class Unzippy {
     })
   }
   getDir() {
-    if ( this.errorState ) { throw new Error( this.error ); }
-    if ( this.dir ) { return this.dir; }
+    if ( this.errorState ) { 
+      throw new Error( this.error ); 
+    }
+    if ( this.dir ) { 
+      return this.dir; 
+    }
     else {
       const { ecdr, zecdl, fd, zecdr } = this;
       let buf;
