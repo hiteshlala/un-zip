@@ -1,6 +1,6 @@
 {
   "name": "@hiteshlala/unzippy",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A Node.js unzip library",
   "main": "unzippy.js",
   "scripts": {

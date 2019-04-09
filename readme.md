@@ -1,13 +1,13 @@
 
 <h1> <img src="https://raw.githubusercontent.com/hiteshlala/unzippy/master/logo.png" alt="Logo" width="50px" height="50px" style="vertical-align:middle"/> Unzippy </h1>
 
+## __Status__ In Development
+
 ## A Node.js unzip library
 
   - Zero dependencies.
 
   - Uncompresses Deflate archives ( default for most zip libraries ).
-
-  - Set number of worker threads ( default is 1 ).
 
   - Provides a directory listing of archive.
 
@@ -42,8 +42,7 @@ Add more options:
   // instantiate archive
   const z = new Unzippy({ 
     src: source, 
-    dest: out,
-    threads: 4
+    dest: out
   });
 
   // get a directory listing
@@ -74,7 +73,6 @@ Add more options:
     {
       src: < String: path to source archive >,
       dest: < String: path to where to unzip >,
-      threads: < Number: number of threads >
 
       // planned options to come in future release:
       // logfile: < Boolean: create a log file>
@@ -100,13 +98,11 @@ Add more options:
 
 ### unzip
 
-- <b>unzip( src, dest, options )</b>
+- <b>unzip( src, dest )</b>
 
   - src - path to source archive
 
   - dest - path to where to unzip
-
-  - options - an Object with optional `threads` key with a number value.
 
 
 
