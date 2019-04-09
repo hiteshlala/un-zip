@@ -1,10 +1,13 @@
 {
   "name": "@hiteshlala/unzippy",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "A Node.js unzip library",
   "main": "unzippy.js",
-  "scripts": {
-  },
+  "scripts": {},
   "author": "Hitesh Lala <hiteshlala@gmail.com>",
-  "license": "ISC"
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hiteshlala/unzippy.git"
+  }
 }
